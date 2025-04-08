@@ -1,4 +1,4 @@
-import request from '../request.js'; // 引入封装好的请求函数
+import request from './request.js'; // 引入封装好的请求函数
 
 // 增加记录
 export function addRecord(table_name, record_data) {
