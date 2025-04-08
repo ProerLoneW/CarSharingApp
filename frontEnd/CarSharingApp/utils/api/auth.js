@@ -1,71 +1,118 @@
-import request from '../request.js'; // 导入封装的请求函数
+import request from '../request.js'; // 引入封装好的请求函数
 
-// 登录
-export function login(username, password) {
+// 用户注册
+export function signup(nickname, phone_number, password_login) {
   return request({
-    url: '/login', // 登录的接口地址
+    url: '/signup', // 注册接口
     method: 'POST',
     data: {
-      username: username,
-      password: password
+      nickname: nickname,
+      phone_number: phone_number,
+      password_login: password_login
     }
   }).then(response => {
-    // 登录成功后的处理
-    if (response.status === 200 && response.data.token) {
-      // 存储登录信息
-      uni.setStorageSync('token', response.data.token);
-      uni.setStorageSync('user', response.data.user);
-      return response.data; // 返回登录的用户数据
+    // 注册成功后的处理
+    if (response.status === 200 && response.data.message) {
+      uni.showToast({
+        title: response.data.message,
+        icon: 'success'
+      });
+      return response.data; // 返回注册成功信息
     } else {
-      throw new Error('登录失败');
+      // 错误处理，如昵称已被使用
+      if (response.data.error) {
+        uni.showToast({
+          title: response.data.error,
+          icon: 'none'
+        });
+        throw new Error(response.data.error);
+      }
     }
   }).catch(error => {
-    // 处理登录失败的情况
-    uni.showToast({
-      title: '登录失败',
-      icon: 'none'
-    });
-    throw error; // 抛出错误
+    console.error('注册失败', error);
+    throw error;
   });
 }
 
-// 登出
+// 用户登录
+export function login(phone_number, password_login) {
+  return request({
+    url: '/login', // 登录接口
+    method: 'POST',
+    data: {
+      phone_number: phone_number,
+      password_login: password_login
+    }
+  }).then(response => {
+    // 登录成功后的处理
+    if (response.status === 200 && response.data.user_id) {
+      // 登录成功后，存储用户ID
+      uni.setStorageSync('user_id', response.data.user_id);
+      uni.showToast({
+        title: '登录成功',
+        icon: 'success'
+      });
+      return response.data; // 返回用户ID
+    } else {
+      // 错误处理，如用户不存在
+      if (response.data.error) {
+        uni.showToast({
+          title: response.data.error,
+          icon: 'none'
+        });
+        throw new Error(response.data.error);
+      }
+    }
+  }).catch(error => {
+    console.error('登录失败', error);
+    throw error;
+  });
+}
+
+// 用户登出
 export function logout() {
   return request({
-    url: '/logout', // 登出的接口地址
+    url: '/logout', // 登出接口
     method: 'POST'
   }).then(response => {
     // 登出成功后的处理
-    if (response.status === 200) {
-      // 清除存储的用户信息和 token
-      uni.removeStorageSync('token');
-      uni.removeStorageSync('user');
+    if (response.status === 200 && response.data.message) {
+      // 清除存储的用户信息
+      uni.removeStorageSync('user_id');
       uni.showToast({
-        title: '登出成功',
+        title: response.data.message,
         icon: 'success'
       });
       return true; // 返回登出成功
     } else {
-      throw new Error('登出失败');
+      // 错误处理
+      if (response.data.error) {
+        uni.showToast({
+          title: response.data.error,
+          icon: 'none'
+        });
+        throw new Error(response.data.error);
+      }
     }
   }).catch(error => {
-    // 处理登出失败的情况
-    uni.showToast({
-      title: '登出失败',
-      icon: 'none'
-    });
-    throw error; // 抛出错误
+    console.error('登出失败', error);
+    throw error;
   });
 }
 
-
-
 //How to use
-// import { login, logout } from './auth';
+// import { signup, login, logout } from './auth';
+
+// // 注册
+// signup('JohnDoe', '1234567890', 'my_password').then(data => {
+//   console.log('注册成功', data);
+// }).catch(error => {
+//   console.error('注册失败', error);
+// });
 
 // // 登录
-// login('username', 'password').then(userData => {
-//   console.log('登录成功', userData);
+// login('1234567890', 'my_password').then(data => {
+//   console.log('登录成功', data);
 // }).catch(error => {
 //   console.error('登录失败', error);
 // });
