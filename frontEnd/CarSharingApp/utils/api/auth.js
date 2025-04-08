@@ -89,7 +89,6 @@ export function logout() {
       if (response.data.error) {
         uni.showToast({
           title: response.data.error,
-          icon: 'none'
         });
         throw new Error(response.data.error);
       }
@@ -101,23 +100,21 @@ export function logout() {
 }
 
 //How to use
-// import { signup, login, logout } from './auth';
-
-// // 注册
+// 用户注册
 // signup('JohnDoe', '1234567890', 'my_password').then(data => {
 //   console.log('注册成功', data);
 // }).catch(error => {
 //   console.error('注册失败', error);
 // });
 
-// // 登录
+// // 用户登录
 // login('1234567890', 'my_password').then(data => {
 //   console.log('登录成功', data);
 // }).catch(error => {
 //   console.error('登录失败', error);
 // });
 
-// // 登出
+// // 用户登出
 // logout().then(() => {
 //   console.log('登出成功');
 // }).catch(error => {
