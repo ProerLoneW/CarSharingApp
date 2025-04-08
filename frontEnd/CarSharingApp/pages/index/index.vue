@@ -27,8 +27,8 @@ export default {
   data() {
     return {
       platform: process.env.VUE_APP_PLATFORM, // 获取当前平台
-      longitude: 116.397428, // 默认经度
-      latitude: 39.90923, // 默认纬度
+      longitude: 116.397428, // 默认经度（天安门）
+      latitude: 39.90923, // 默认纬度（天安门）
       markers: [], // 地图上的标记
       polyline: [], // 路径
       startPoint: '', // 起点
@@ -43,6 +43,14 @@ export default {
         console.error('地图脚本加载失败：', error);
       });
     }
+
+    // 在组件加载后初始化同济大学嘉定校区位置
+    this.getTongjiUniversityLocation().then((location) => {
+      this.longitude = location[0];
+      this.latitude = location[1];
+    }).catch(error => {
+      console.error("获取同济大学嘉定校区位置失败：", error);
+    });
   },
   methods: {
     // 加载高德地图 JS 脚本（仅在H5平台使用）
@@ -68,11 +76,33 @@ export default {
       });
     },
 
+    // 获取同济大学嘉定校区经纬度
+    async getTongjiUniversityLocation() {
+      const address = "同济大学嘉定校区";
+      const geocodeUrl = `https://restapi.amap.com/v3/geocode/geo?key=81708c4f856b6a0c5722ae083d93afa6&address=${encodeURIComponent(address)}`;
+
+      try {
+        const res = await uni.request({
+          url: geocodeUrl,
+          method: 'GET',
+        });
+        if (res.data.status === "1" && res.data.geocodes && res.data.geocodes.length > 0) {
+          const location = res.data.geocodes[0].location.split(',');
+          return [parseFloat(location[0]), parseFloat(location[1])]; // 经纬度 [longitude, latitude]
+        } else {
+          throw new Error('未找到同济大学嘉定校区的位置');
+        }
+      } catch (error) {
+        console.error(error);
+        return [116.397428, 39.90923]; // 默认的经纬度，如果发生错误，使用默认值
+      }
+    },
+
     // 地理编码：将地名转换为经纬度（使用高德地理编码API）
     geocodeAddress(address) {
       return new Promise((resolve, reject) => {
-        const geocodeUrl = https://restapi.amap.com/v3/geocode/geo?key=81708c4f856b6a0c5722ae083d93afa6&address=${encodeURIComponent(address)};
-        
+        const geocodeUrl = `https://restapi.amap.com/v3/geocode/geo?key=81708c4f856b6a0c5722ae083d93afa6&address=${encodeURIComponent(address)}`;
+
         uni.request({
           url: geocodeUrl,
           method: 'GET',
@@ -86,7 +116,7 @@ export default {
             }
           },
           fail: (error) => {
-            reject(地理编码请求失败：${error});
+            reject(`地理编码请求失败：${error}`);
           }
         });
       });
@@ -94,7 +124,7 @@ export default {
 
     // 通过高德 Web 服务 API 获取路径规划
     getDrivingRoute(startLngLat, endLngLat) {
-      const url = https://restapi.amap.com/v3/direction/driving?key=81708c4f856b6a0c5722ae083d93afa6&origin=${startLngLat[0]},${startLngLat[1]}&destination=${endLngLat[0]},${endLngLat[1]}&strategy=0;
+      const url = `https://restapi.amap.com/v3/direction/driving?key=81708c4f856b6a0c5722ae083d93afa6&origin=${startLngLat[0]},${startLngLat[1]}&destination=${endLngLat[0]},${endLngLat[1]}&strategy=0`;
 
       return new Promise((resolve, reject) => {
         uni.request({
