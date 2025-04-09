@@ -79,7 +79,7 @@ export function updateRecord(table_name, record_id, field, value) {
 
 // 查询记录（全局或局部查询）
 export function queryRecords(table_name, record_id = null) {
-  const url = record_id ? `/api/query?table_name=${table_name}&record_id=${record_id}` : `/api/query?table_name=${table_name}`;
+  const url = record_id ? `/query?table_name=${table_name}&record_id=${record_id}` : `/query?table_name=${table_name}`;
   
   return request({
     url: url, // 查询记录接口
