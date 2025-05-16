@@ -94,15 +94,14 @@
 			return {
 
 				isRiding: false, // 是否开始行车,用于切换首页状态！！！！！
-				api_key: '',     // 高德地图 api 放在全局数据中方便管理
-				longitude: 121.506269,
-				latitude: 31.281904,
+				api_key: '', // 高德地图 api 放在全局数据中方便管理
+				longitude: null,
+				latitude: null,
 				markers: [],
 				polyline: [],
 				scale: 13,
-				startPoint: '同济大学四平路校区',
-				// TODO: 
-				startLngLat: [121.506269, 31.281904], // 初始起点经纬度
+				startPoint: '获取中...',
+				startLngLat: [], // 初始起点经纬度
 				endPoint: '', // 初始终点
 				endLngLat: null, // 初始终点经纬度
 				currentLocation: [121.297032, 31.267517], // 行程中的当前位置
@@ -128,7 +127,7 @@
 			if (this.isRiding === true) {
 				this.planRouteWithCoordinates(); // 绘制从当前位置到终点的路线
 			} else {
-				this.initAppMap();
+				this.getCurrentLocation(); // 调用定位函数
 			}
 		},
 		mounted() {
@@ -175,14 +174,68 @@
 					},
 				}];
 			},
-
+			// 获取当前手机定位
+			getCurrentLocation() {
+			    uni.getLocation({
+			      type: 'wgs84', // 坐标系类型，高德API需要'gcj02'或'wgs84'，需根据实际情况调整
+			      success: async (res) => {
+					console.log('当前位置的经度：' + res.longitude);
+					console.log('当前位置的纬度：' + res.latitude);
+			        this.longitude = res.longitude;
+			        this.latitude = res.latitude;
+			        
+			        // 调用高德逆地理编码API获取地址
+			        try {
+			          const address = await this.reverseGeocode(this.longitude, this.latitude);
+			          this.currentAddress = address;
+			          // 更新起点信息
+			          this.startPoint = address;
+			          this.startLngLat = [this.longitude, this.latitude];
+			          // 初始化地图（使用实时经纬度）
+			          this.initAppMap();
+			        } catch (error) {
+			          console.error('逆地理编码失败:', error);
+			          this.currentAddress = '定位失败，请手动设置起点';
+			        }
+			      },
+			      fail: (error) => {
+			        console.error('定位失败:', error);
+			        this.currentAddress = '定位失败，请手动设置起点';
+			      }
+			    });
+			  },
+			
+			  // 逆地理编码函数（将经纬度转换为地址）
+			  reverseGeocode(lng, lat) {
+			    return new Promise((resolve, reject) => {
+			      const url = `https://restapi.amap.com/v3/geocode/regeo?key=${this.api_key}&location=${lng},${lat}&extensions=base`;
+			      
+			      uni.request({
+			        url,
+			        method: 'GET',
+			        success: (res) => {
+			          if (res.data.status === '1') {
+			            // 解析地址（示例：取格式化地址）
+			            const address = res.data.regeocode.formatted_address;
+			            resolve(address);
+			          } else {
+			            reject('逆地理编码失败：' + res.data.info);
+			          }
+			        },
+			        fail: (error) => {
+			          reject('逆地理编码请求失败：' + error);
+			        }
+			      });
+			    });
+			  },
+			
 			// 更新当前位置
 			updateLocation(lng, lat) {
 				this.longitude = lng;
 				this.latitude = lat;
 				this.markers = [{
 					id: 1,
-					title:this.startPoint,
+					title: this.startPoint,
 					longitude: lng,
 					latitude: lat,
 					iconPath: "/static/image/point_start.png", // 使用内置图标
